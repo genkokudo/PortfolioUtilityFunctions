@@ -5,19 +5,12 @@ using Microsoft.Extensions.Logging;
 
 namespace PortfolioUtilityFunctions;
 
-public class Function1
+public class Function1(ILogger<Function1> logger)
 {
-    private readonly ILogger<Function1> _logger;
-
-    public Function1(ILogger<Function1> logger)
-    {
-        _logger = logger;
-    }
-
     [Function("Test")]
     public IActionResult Run([HttpTrigger(AuthorizationLevel.Function, "get", "post")] HttpRequest req)
     {
-        _logger.LogInformation("C# HTTP trigger function processed a request.");
+        logger.LogInformation("C# HTTP trigger function processed a request.");
         return new OkObjectResult("Welcome to Azure Functions!🐧");
     }
 }
