@@ -2,13 +2,18 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Azure.Cosmos;
 using Microsoft.Azure.Functions.Worker;
-using PortfolioUtilityFunctions.Model;
-using System;
-using System.Collections.Generic;
-using System.Text;
+using Portfolio.Shared.Model;
 
 namespace PortfolioUtilityFunctions
 {
+    // Blazor WebAssembly (WASM)は環境変数も解析で読まれる可能性があるので、AnonymousにしてCORSでドメイン制限をかける。WASMからアクセスする関数は、関数キー方式は使わない。
+    // ただしCORSによる制限は「許可されてないサイトのJSからは叩けない」だけなのでブラウザからだったら普通にアクセスできる。
+    // つまりWASMからアクセスする関数は、誰かに叩かれても困らない処理でなければならない。
+
+    /// <summary>
+    /// ポートフォリオのデータを取得する関数
+    /// </summary>
+    /// <param name="cosmosClient"></param>
     public class GetPortfolioData(CosmosClient cosmosClient)
     {
         private readonly string _databaseId = "PortfolioDB";
