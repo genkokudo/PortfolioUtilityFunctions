@@ -8,6 +8,8 @@ namespace PortfolioUtilityFunctions;
 public class Function1(ILogger<Function1> logger)
 {
     // Blazor WebAssembly (WASM)は環境変数も解析で読まれる可能性があるので、AnonymousにしてCORSでドメイン制限をかける。WASMからアクセスする関数は、関数キー方式は使わない。
+    // ただしCORSによる制限は「許可されてないサイトのJSからは叩けない」だけなのでブラウザからだったら普通にアクセスできる。
+    // つまりWASMからアクセスする関数は、誰かに叩かれても困らない処理でなければならない。
     [Function("TestFromSite")]
     public IActionResult RunTest([HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = null)] HttpRequest req)
     {
