@@ -47,7 +47,7 @@ namespace PortfolioUtilityFunctions
             var container = cosmosClient.GetContainer(_databaseId, "Skills");
 
             var query = new QueryDefinition(
-                "SELECT * FROM c WHERE c.partitionKey = @pk ORDER BY c.order")
+                "SELECT * FROM c WHERE c.partitionKey = @pk ORDER BY c.sortOrder")
                 .WithParameter("@pk", "skill");
 
             var results = new List<SkillItem>();
