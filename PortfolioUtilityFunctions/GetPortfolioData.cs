@@ -27,12 +27,10 @@ namespace PortfolioUtilityFunctions
         public async Task<IActionResult> Run(
             [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = null)] HttpRequest req)
         {
-            var skills = await GetSkillsAsync();
-
-            var result = new Dictionary<string, object>
+            var result = new PortfolioData
             {
-                ["Skills"] = skills,
-                //["WorkHistory"] = workHistory  // 後で追加するだけ
+                Skills = await GetSkillsAsync(),
+                WorkHistories = await GetWorkHistoriesAsync()
             };
 
             return new OkObjectResult(result);
@@ -52,6 +50,30 @@ namespace PortfolioUtilityFunctions
 
             var results = new List<SkillItem>();
             var iterator = container.GetItemQueryIterator<SkillItem>(query);
+
+            while (iterator.HasMoreResults)
+            {
+                var response = await iterator.ReadNextAsync();
+                results.AddRange(response);
+            }
+
+            return results;
+        }
+
+        /// <summary>
+        /// WorkHistoriesを取得する
+        /// </summary>
+        /// <returns>WorkHistoryのリスト</returns>
+        private async Task<List<WorkHistoryItem>> GetWorkHistoriesAsync()
+        {
+            var container = cosmosClient.GetContainer(_databaseId, "WorkHistory");
+
+            var query = new QueryDefinition(
+                "SELECT * FROM c WHERE c.partitionKey = @pk ORDER BY c.sortOrder")
+                .WithParameter("@pk", "workHistory");
+
+            var results = new List<WorkHistoryItem>();
+            var iterator = container.GetItemQueryIterator<WorkHistoryItem>(query);
 
             while (iterator.HasMoreResults)
             {
