@@ -1,4 +1,5 @@
-﻿using Azure.Storage.Blobs;
+﻿using Azure.Storage;
+using Azure.Storage.Blobs;
 using Azure.Storage.Blobs.Models;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -7,9 +8,9 @@ using Microsoft.Azure.Functions.Worker;
 using Microsoft.Extensions.Logging;
 using Portfolio.Shared.Model;
 using SixLabors.ImageSharp;
-using SixLabors.ImageSharp.Formats.Jpeg;
 using SixLabors.ImageSharp.Formats.Webp;
 using SixLabors.ImageSharp.Processing;
+using System.Text.Json;
 
 namespace PortfolioUtilityFunctions
 {
@@ -33,15 +34,23 @@ namespace PortfolioUtilityFunctions
     //    partitionKeyPath: "/id");
     //var container = containerResponse.Container;
 
-
+    // azuriteではそのまま動作するが、AzureではBlobストレージアカウントのイベントサブスクリプションにFunctionsを登録する必要がある。
 
     /// <summary>
     /// データを生成する関数
     /// </summary>
-    public class GenerateData(CosmosClient cosmosClient, BlobServiceClient blobServiceClient)
+    public class GenerateData(CosmosClient cosmosClient, BlobServiceClient blobServiceClient, ILogger<GenerateData> logger)
     {
         private readonly Size BannerThumbSize = new(280, 280);  // 正方形ならバナー、長方形ならフライヤーとする。
         private readonly Size FlyerThumbSize = new(248, 350);
+        private readonly string FullContainerName = "works-full";
+        private readonly string ThumbContainerName = "works-thumb";
+
+        // BlobTriggerから、Microsoft推奨のEventGridTriggerに変更する。BlobTriggerは、Azure Functionsのv5以降では非推奨になったため。
+        // BlobTriggerの場合、Webhook URLを組み立てる必要があるが、EventGridTriggerの場合は、Azure PortalのEvent Gridのサブスクリプションを作成するだけで済む。
+        // BlobTriggerはBlobの中身をStreamで渡してくれるが、レイテンシと信頼性の問題があるため本番運用には向かない。
+        // EventGridTriggerはBlobの中身を渡してくれないが、BlobのURLを渡してくれるので、Blobの中身を取得する処理を自分で書く必要がある。
+
 
         /// <summary>
         /// サムネイルを生成するBlobTrigger関数
@@ -52,16 +61,34 @@ namespace PortfolioUtilityFunctions
         /// <param name="context"></param>
         /// <returns></returns>
         [Function("GenerateThumbnail")]
-        public async Task Run(
-            [BlobTrigger("works-full/{name}", Source = BlobTriggerSource.EventGrid, Connection = "StorageConnection")] Stream inputBlob,
-            string name,
-            FunctionContext context)
+        public async Task Run([EventGridTrigger] string data)
+        //[BlobTrigger("works-full/{name}", Source = BlobTriggerSource.EventGrid, Connection = "StorageConnection")] Stream inputBlob,
+        //string name,
+        //FunctionContext context)
         {
-            var logger = context.GetLogger("GenerateThumbnail");
+            // Jsonで送られてくるEventGridのデータをパースする
+            // Blobの場所やファイル名を取得する
+            using var doc = JsonDocument.Parse(data);
+            var eventType = doc.RootElement.GetProperty("eventType").GetString();
+            var subject = doc.RootElement.GetProperty("subject").GetString(); // 例: /blobServices/default/containers/works-full/blobs/1.png
+
+            // BlobCreated以外は無視, works-fullコンテナ以外は無視
+            if (eventType != "Microsoft.Storage.BlobCreated" || subject is null || !subject.Contains($"/containers/{FullContainerName}/"))
+            {
+                return;
+            }
+
+            // subjectからファイル名を抜き出す
+            var name = subject.Split('/').Last();
             logger.LogInformation($"サムネイル生成開始: {name}");
+            var sourceContainer = blobServiceClient.GetBlobContainerClient(FullContainerName);
+
+            // Blobを取得する
+            var sourceBlob = sourceContainer.GetBlobClient(name);
+            using var inputStream = await sourceBlob.OpenReadAsync();
 
             // 画像を読み込んで、サイズを既定のサムネイルサイズに縮小する
-            using var image = await Image.LoadAsync(inputBlob);
+            using var image = await Image.LoadAsync(inputStream);
             var thumbSize = image.Size.Width == image.Size.Height ? BannerThumbSize : FlyerThumbSize; 
             image.Mutate(x => x.Resize(new ResizeOptions
             {
@@ -69,9 +96,9 @@ namespace PortfolioUtilityFunctions
                 Size = thumbSize
             }));
 
-            // Blob Storageにサムネイルを保存する
+            // もう1つのBlob Storageにサムネイルを保存する
             var thumbFileName = Path.ChangeExtension(name, ".webp");
-            var thumbBlob = blobServiceClient.GetBlobContainerClient("works-thumb").GetBlobClient(thumbFileName);    // works-full（フルサイズ原本）, works-thumb(サムネイル)
+            var thumbBlob = blobServiceClient.GetBlobContainerClient(ThumbContainerName).GetBlobClient(thumbFileName);    // works-full（フルサイズ原本）, works-thumb(サムネイル)
 
             // 既に存在するかチェック
             var existsResponse = await thumbBlob.ExistsAsync();
@@ -81,6 +108,7 @@ namespace PortfolioUtilityFunctions
                     $"サムネイル '{thumbFileName}' は既に存在します。ファイル名の衝突の可能性があるため処理を中断しました。元ファイル: {name}");
             }
 
+            // サムネイルをwebp形式で保存する
             using var outputStream = new MemoryStream();
             var encoder = new WebpEncoder
             {
@@ -98,11 +126,8 @@ namespace PortfolioUtilityFunctions
             // Cosmos DBに空データ登録
             var workId = Path.GetFileNameWithoutExtension(name);
             await RegisterWorkItemAsync(workId, thumbBlob.Uri.ToString(),
-                blobServiceClient.GetBlobContainerClient("works-full")
+                blobServiceClient.GetBlobContainerClient(FullContainerName)
                     .GetBlobClient($"newFile/{name}").Uri.ToString());
-
-            logger.LogInformation($"Cosmos DB登録完了: id={workId}");
-
         }
 
         /// <summary>
