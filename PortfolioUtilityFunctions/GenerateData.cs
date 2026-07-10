@@ -53,7 +53,7 @@ namespace PortfolioUtilityFunctions
         /// <returns></returns>
         [Function("GenerateThumbnail")]
         public async Task Run(
-            [BlobTrigger("works-full/{name}", Connection = "StorageConnection")] Stream inputBlob,
+            [BlobTrigger("works-full/{name}", Source = BlobTriggerSource.EventGrid, Connection = "StorageConnection")] Stream inputBlob,
             string name,
             FunctionContext context)
         {
