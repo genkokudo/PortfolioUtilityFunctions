@@ -23,6 +23,18 @@ namespace PortfolioUtilityFunctions
     // 4. Azure Storage Explorerで、"works-full"コンテナに画像をアップロードする。
     // 5. アップロードした画像のサムネイルが、"works-thumb"コンテナに生成されることを確認する。
 
+    // CosmosDBの接続文字列は、local.settings.jsonに"CosmosDB__ConnectionString"という名前で設定しておくこと。
+
+    // CosmosDBにはWorksコンテナを作っておくこと。PartitionKeyは/idにすること。
+    // 以下のコードでWorksコンテナが無い場合に自動的に作成できる。実務ではこっちの方が良い。
+    //var database = _cosmosClient.GetDatabase("PortfolioDb");
+    //var containerResponse = await database.CreateContainerIfNotExistsAsync(
+    //    id: "Works",
+    //    partitionKeyPath: "/id");
+    //var container = containerResponse.Container;
+
+
+
     /// <summary>
     /// データを生成する関数
     /// </summary>
