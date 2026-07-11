@@ -31,7 +31,7 @@ namespace PortfolioUtilityFunctions
 
     // CosmosDBにはWorksコンテナを作っておくこと。PartitionKeyは/idにすること。
     // 以下のコードでWorksコンテナが無い場合に自動的に作成できる。実務ではこっちの方が良い。
-    //var database = _cosmosClient.GetDatabase("PortfolioDb");
+    //var database = _cosmosClient.GetDatabase("PortfolioDB");
     //var containerResponse = await database.CreateContainerIfNotExistsAsync(
     //    id: "Works",
     //    partitionKeyPath: "/id");
