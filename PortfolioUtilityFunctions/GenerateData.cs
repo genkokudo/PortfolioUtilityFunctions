@@ -4,6 +4,7 @@ using Azure.Storage.Blobs.Models;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Azure.Cosmos;
+using Microsoft.Azure.Cosmos.Serialization.HybridRow;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Azure.Functions.Worker.Http;
 using Microsoft.Extensions.Logging;
@@ -167,7 +168,6 @@ namespace PortfolioUtilityFunctions
             var response = req.CreateResponse(HttpStatusCode.OK);
             await response.WriteStringAsync($"WorkItem with ID {workId} registered in CosmosDB.");
         }
-
 
     }
 }
