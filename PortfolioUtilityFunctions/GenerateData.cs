@@ -129,7 +129,7 @@ namespace PortfolioUtilityFunctions
             var workId = Path.GetFileNameWithoutExtension(name);
             await RegisterWorkItemAsync(workId, thumbBlob.Uri.ToString(),
                 blobServiceClient.GetBlobContainerClient(FullContainerName)
-                    .GetBlobClient($"newFile/{name}").Uri.ToString());
+                    .GetBlobClient($"{name}").Uri.ToString());
         }
 
         /// <summary>
