@@ -45,6 +45,7 @@ namespace PortfolioUtilityFunctions
     /// </summary>
     public class GenerateData(CosmosClient cosmosClient, BlobServiceClient blobServiceClient, ILogger<GenerateData> logger)
     {
+        private readonly string _databaseId = "PortfolioDB";
         private readonly Size BannerThumbSize = new(280, 280);  // 正方形ならバナー、長方形ならフライヤーとする。
         private readonly Size FlyerThumbSize = new(248, 350);
         private readonly string FullContainerName = "works-full";
@@ -140,7 +141,7 @@ namespace PortfolioUtilityFunctions
         /// <returns></returns>
         private async Task RegisterWorkItemAsync(string id, string thumbnailUrl, string fullImageUrl)
         {
-            var container = cosmosClient.GetContainer("PortfolioDb", "Works");
+            var container = cosmosClient.GetContainer(_databaseId, "Works");
 
             var workItem = new WorkItem
             {

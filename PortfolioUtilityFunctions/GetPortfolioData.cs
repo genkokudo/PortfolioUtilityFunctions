@@ -92,7 +92,7 @@ namespace PortfolioUtilityFunctions
             [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = null)] HttpRequest req)
         {
             // "Works"コンテナからデータを取得する
-            var container = cosmosClient.GetContainer("PortfolioDb", "Works");
+            var container = cosmosClient.GetContainer(_databaseId, "Works");
             var query = new QueryDefinition("SELECT * FROM c");
             var iterator = container.GetItemQueryIterator<WorkItem>(query);
             var workItems = new List<WorkItem>();
