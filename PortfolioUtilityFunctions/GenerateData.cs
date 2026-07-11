@@ -5,11 +5,13 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Azure.Cosmos;
 using Microsoft.Azure.Functions.Worker;
+using Microsoft.Azure.Functions.Worker.Http;
 using Microsoft.Extensions.Logging;
 using Portfolio.Shared.Model;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.Formats.Webp;
 using SixLabors.ImageSharp.Processing;
+using System.Net;
 using System.Text.Json;
 
 namespace PortfolioUtilityFunctions
@@ -35,6 +37,7 @@ namespace PortfolioUtilityFunctions
     //var container = containerResponse.Container;
 
     // azuriteではそのまま動作するが、AzureではBlobストレージアカウントのイベントサブスクリプションにFunctionsを登録する必要がある。
+    // この設定のためにはAzureサブスクリプションのリソース プロバイダーにMicrosoft.EventGridを登録する必要がある。Azureポータルのサブスクリプションの「リソース プロバイダー」でMicrosoft.EventGridを検索して登録する。
 
     /// <summary>
     /// データを生成する関数
@@ -62,9 +65,6 @@ namespace PortfolioUtilityFunctions
         /// <returns></returns>
         [Function("GenerateThumbnail")]
         public async Task Run([EventGridTrigger] string data)
-        //[BlobTrigger("works-full/{name}", Source = BlobTriggerSource.EventGrid, Connection = "StorageConnection")] Stream inputBlob,
-        //string name,
-        //FunctionContext context)
         {
             // Jsonで送られてくるEventGridのデータをパースする
             // Blobの場所やファイル名を取得する
@@ -157,5 +157,17 @@ namespace PortfolioUtilityFunctions
 
             await container.CreateItemAsync(workItem, new PartitionKey(workItem.Id));
         }
+
+        // CosmosDB登録テスト
+        [Function("TestRegisterWorkItem")]
+        public async Task TestRegisterWorkItem([HttpTrigger(AuthorizationLevel.Function, "get", "post")] HttpRequestData req)
+        {
+            var workId = Guid.NewGuid().ToString();
+            await RegisterWorkItemAsync(workId, "https://example.com/thumb.webp", "https://example.com/full.png");
+            var response = req.CreateResponse(HttpStatusCode.OK);
+            await response.WriteStringAsync($"WorkItem with ID {workId} registered in CosmosDB.");
+        }
+
+
     }
 }
