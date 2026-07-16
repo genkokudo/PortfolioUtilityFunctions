@@ -29,8 +29,12 @@ namespace PortfolioUtilityFunctions
         {
             var result = new PortfolioData
             {
+                AuthorNameKanji = Environment.GetEnvironmentVariable("AuthorNameKanji") ?? string.Empty,
+                AuthorNameHiragana = Environment.GetEnvironmentVariable("AuthorNameHiragana") ?? string.Empty,
+                AuthorNameAlphabet = Environment.GetEnvironmentVariable("AuthorNameAlphabet") ?? string.Empty,
                 Skills = await GetSkillsAsync(),
-                WorkHistories = await GetWorkHistoriesAsync()
+                WorkHistories = await GetWorkHistoriesAsync(),
+                Works = await GetWorksAsync()
             };
 
             return new OkObjectResult(result);
@@ -84,7 +88,26 @@ namespace PortfolioUtilityFunctions
             return results;
         }
 
+        /// <summary>
+        /// Worksを取得する
+        /// </summary>
+        /// <returns>WorkItemのリスト</returns>
+        private async Task<List<WorkItem>> GetWorksAsync()
+        {
+            var container = cosmosClient.GetContainer(_databaseId, "Works");
+            var query = container.GetItemQueryIterator<WorkItem>(
+                new QueryDefinition(
+                    "SELECT * FROM c WHERE c.isPublished = true ORDER BY c.sortOrder"));
 
+            var results = new List<WorkItem>();
+            while (query.HasMoreResults)
+            {
+                var response = await query.ReadNextAsync();
+                results.AddRange(response);
+            }
+
+            return results;
+        }
 
         // CosmosDB読み込みテスト
         [Function("TestReadWorkItem")]
