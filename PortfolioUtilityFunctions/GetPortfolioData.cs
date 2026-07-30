@@ -37,6 +37,7 @@ namespace PortfolioUtilityFunctions
                 ProfileImageUrl = profile?.ProfileImageUrl ?? string.Empty,
                 ProfessionalTitle = profile?.ProfessionalTitle ?? string.Empty,
                 HeroTitle = profile?.HeroTitle ?? string.Empty,
+                HeroDescription = profile?.HeroDescription ?? string.Empty,
                 ProfileDescription = profile?.ProfileDescription ?? string.Empty,
                 GitHubUrl = profile?.GitHubUrl ?? string.Empty,
                 ProfileTags = profile?.ProfileTags ?? new List<string>(),
