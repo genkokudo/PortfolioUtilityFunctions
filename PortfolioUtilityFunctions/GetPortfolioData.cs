@@ -40,7 +40,7 @@ namespace PortfolioUtilityFunctions
                 HeroDescription = profile?.HeroDescription ?? string.Empty,
                 ProfileDescription = profile?.ProfileDescription ?? string.Empty,
                 GitHubUrl = profile?.GitHubUrl ?? string.Empty,
-                ProfileTags = profile?.ProfileTags ?? new List<string>(),
+                ProfileTags = profile?.ProfileTags ?? [],
                 Skills = await GetSkillsAsync(),
                 WorkHistories = await GetWorkHistoriesAsync(),
                 Works = await GetWorksAsync()
