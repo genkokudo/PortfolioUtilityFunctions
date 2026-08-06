@@ -5,7 +5,6 @@ using Microsoft.Azure.Functions.Worker.Builder;
 using Microsoft.Extensions.Azure;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using System.Text.Json;
 
 var builder = FunctionsApplication.CreateBuilder(args);
 
@@ -22,16 +21,15 @@ builder.Services
 ;
 
 // CosmosDBに接続
-// CosmosClientをSystem.Text.Json使うように設定変更する
-// Cosmos DB SDK（Microsoft.Azure.Cosmos）は、Newtonsoft.Jsonを内部シリアライザーとして使っているため、System.Text.Jsonを使うように変更する必要がある。
+// Cosmos DB SDK（Microsoft.Azure.Cosmos）は、Newtonsoft.Jsonを内部シリアライザーとして使っている。
 builder.Services.AddSingleton(sp =>
 {
     var connectionString = Environment.GetEnvironmentVariable("CosmosDB__ConnectionString");
     var options = new CosmosClientOptions
     {
-        UseSystemTextJsonSerializerWithOptions = new JsonSerializerOptions
+        SerializerOptions = new CosmosSerializationOptions
         {
-            PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+            PropertyNamingPolicy = CosmosPropertyNamingPolicy.CamelCase
         }
     };
     return new CosmosClient(connectionString, options);
