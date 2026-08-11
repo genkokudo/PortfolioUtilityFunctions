@@ -24,8 +24,6 @@ Azure Cosmos DBに保存したプロフィール、スキル、職歴、制作�
 | --- | --- | --- | --- |
 | `GetPortfolioData` | HTTP GET | Anonymous | プロフィール、スキル、職歴、公開中の制作物を取得して一つのレスポンスへ集約する |
 | `GenerateThumbnail` | Event Grid | Event Grid | `works-full`への画像登録を検知し、WebPサムネイルの生成と制作物データの初期登録を行う |
-| `TestReadWorkItem` | HTTP GET | Anonymous | `Works`コンテナの読み込みを確認する開発用関数 |
-| `TestRegisterWorkItem` | HTTP GET / POST | Function | テスト用の制作物データを登録する開発用関数 |
 
 `GetPortfolioData`はブラウザ上で動作するBlazor WebAssemblyから呼び出すため、関数キーをクライアントへ保持させずAnonymousとしています。公開されても問題のないデータだけを返し、Azure Functions側のCORS設定で呼び出し元を制限する前提です。
 
@@ -127,27 +125,6 @@ Azure Blob Storageでは次のコンテナを使用します。
 | `works-full` | フルサイズの元画像 |
 | `works-thumb` | 自動生成したWebPサムネイル |
 
-## プロジェクト構成
-
-```text
-PortfolioUtilityFunctions/
-├── .github/
-│   └── workflows/
-│       └── master_portfolioutilityfunctions.yml
-├── PortfolioUtilityFunctions/
-│   ├── GenerateData.cs
-│   ├── GetPortfolioData.cs
-│   ├── Program.cs
-│   ├── host.json
-│   ├── PortfolioUtilityFunctions.csproj
-│   ├── libs/
-│   │   └── Portfolio.Shared.dll
-│   └── Properties/
-├── PortfolioUtilityFunctions.slnx
-├── LICENSE.txt
-└── README.md
-```
-
 ## ローカル開発
 
 ### 必要環境
@@ -244,11 +221,6 @@ BlazorフロントエンドとFunctionsで共通モデルを使用し、APIの�
 
 Azureへの認証情報はGitHub Secretsで管理し、ワークフロー内へ直接記述しません。
 
-## 開発用関数について
-
-`TestReadWorkItem`と`TestRegisterWorkItem`は、Azure Cosmos DBとの接続やデータ操作を確認するための開発用関数です。本番環境で不要な場合は、デプロイ対象から除外するか、十分な認証・認可を設定してください。
-
-特に`TestReadWorkItem`は現在Anonymousであり、`Works`コンテナの全データを返します。本番公開時は削除または認証レベルの変更が必要です。
 
 ## ライセンス
 
