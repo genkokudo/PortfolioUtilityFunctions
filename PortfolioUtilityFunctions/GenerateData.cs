@@ -160,14 +160,4 @@ public class GenerateData(CosmosClient cosmosClient, BlobServiceClient blobServi
         await container.CreateItemAsync(workItem, new PartitionKey(workItem.Id));
     }
 
-    // CosmosDB登録テスト
-    [Function("TestRegisterWorkItem")]
-    public async Task TestRegisterWorkItem([HttpTrigger(AuthorizationLevel.Function, "get", "post")] HttpRequestData req)
-    {
-        var workId = Guid.NewGuid().ToString();
-        await RegisterWorkItemAsync(workId, "https://example.com/thumb.webp", "https://example.com/full.png");
-        var response = req.CreateResponse(HttpStatusCode.OK);
-        await response.WriteStringAsync($"WorkItem with ID {workId} registered in CosmosDB.");
-    }
-
 }

@@ -134,25 +134,5 @@ public class GetPortfolioData(CosmosClient cosmosClient)
 
         return results;
     }
-
-    // CosmosDB読み込みテスト
-    [Function("TestReadWorkItem")]
-    public async Task<IActionResult> TestReadWorkItem(
-        [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = null)] HttpRequest req)
-    {
-        // "Works"コンテナからデータを取得する
-        var container = cosmosClient.GetContainer(_databaseId, "Works");
-        var query = new QueryDefinition("SELECT * FROM c");
-        var iterator = container.GetItemQueryIterator<WorkItem>(query);
-        var workItems = new List<WorkItem>();
-
-        while (iterator.HasMoreResults)
-        {
-            var response = await iterator.ReadNextAsync();
-            workItems.AddRange(response);
-        }
-
-        return new OkObjectResult(workItems);
-    }
 }
 
